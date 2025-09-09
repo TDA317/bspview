@@ -6,7 +6,8 @@ import * as EssentialsPlugin from "@tweakpane/plugin-essentials";
 import { FpsGraphBladeApi } from "@tweakpane/plugin-essentials";
 import { FilePicker } from "./FilePicker";
 import { DragEvents } from "./DragEvents";
-import { QuakeMap } from "./QuakeMap";
+import { BspRenderer } from "./BspRenderer";
+import { MapParser } from "./MapParser";
 import { AmbientLight, BoxGeometry, CubeTextureLoader, Mesh, MeshBasicMaterial, MeshStandardMaterial, Scene } from "three";
 
 const NEAR_CLIPPING = 0.01;
@@ -92,7 +93,7 @@ const filePicker = new FilePicker();
 fileButton.on("click", async () => {
     const file = await filePicker.activate();
     const buffer = await file.arrayBuffer();
-    loadMap(buffer);
+    loadMap(file.name, buffer);
 });
 
 const wadManager = new WadManager();
@@ -110,9 +111,10 @@ wadButton.on("click", async () => {
 async function loadMapFromURL(url: string) {
     const response = await fetch(url);
     const buffer = await response.arrayBuffer();
+    const name = url.split("/").pop();
 
     if (buffer.byteLength > 0) {
-        loadMap(buffer);
+        loadMap(name, buffer);
     }
 }
 
@@ -125,19 +127,32 @@ function checkMobileSupport() {
 
 checkMobileSupport();
 
-async function loadMap(buffer: ArrayBuffer) {
+async function loadMap(name: string, buffer: ArrayBuffer) {
 
     const scene = new Scene();
     const light = new AmbientLight(0xffffff, 1.0);
     scene.add(light);
 
-    const map = new QuakeMap(buffer, wadManager);
+    let map: any;
 
-    scene.add(map.mesh());
+    if (name.endsWith(".bsp")) {
+        map = new BspRenderer(buffer, wadManager);
+        scene.add(map.mesh());
+    } else if (name.endsWith(".map")) {
+        const text = new TextDecoder().decode(buffer);
+        const parser = new MapParser(text);
+        const brushes = parser.getBrushes();
+        const material = new MeshStandardMaterial({ color: 0xcccccc });
+        for (const brush of brushes) {
+            const mesh = new Mesh(brush.geometry(), material);
+            scene.add(mesh);
+        }
+    }
 
     // Register hotkeys
 
     materialBlade.on('change', (ev) => {
+        if (!map) return;
         let material: THREE.Material = null;
         switch (ev.value) {
             case 'phong':

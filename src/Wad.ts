@@ -1,6 +1,6 @@
 import { TypedDataView } from "./TypedDataView";
-import { Texture } from "./bsp";
-import { Palette } from "./palette";
+import { Texture } from "./Bsp";
+import { Palette } from "./Palette";
 
 const magic = 0x57414433;
 
@@ -43,18 +43,20 @@ export class Wad {
             "Uint16",
             "Char16",
         ]);
-        const dirs = data.map((entry): Lump => {
-            return {
-                offset: entry[0],
-                diskSize: entry[1],
-                size: entry[2],
-                type: entry[3],
-                compressed: entry[4], // Skip over entry[5] it's padding
-                name: entry[6],
-            };
-        });
+        const dirs = data.map(
+            (entry: [number, number, number, number, number, number, string]): Lump => {
+                return {
+                    offset: entry[0],
+                    diskSize: entry[1],
+                    size: entry[2],
+                    type: entry[3],
+                    compressed: entry[4], // Skip over entry[5] it's padding
+                    name: entry[6],
+                };
+            }
+        );
 
-        const tex = dirs.map((dir): Texture => {
+        const tex = dirs.map((dir: Lump): Texture => {
             const data = new TypedDataView(
                 new DataView(buffer, dir.offset, TEXTURE_SIZE)
             ).asTypes([
@@ -82,7 +84,7 @@ export class Wad {
 
         const textures: { [key: string]: Texture } = {};
 
-        tex.forEach((t) => {
+        tex.forEach((t: Texture) => {
             const mip = t.globalOffset + t.offset1;
             t.pixels = new Uint8Array(
                 buffer.slice(mip, mip + t.width * t.height)

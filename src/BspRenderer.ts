@@ -21,7 +21,7 @@ import { QuakeTexture } from "./QuakeTexture";
 const missing = require("../docs/missing.png");
 
 
-export class QuakeMap {
+export class BspRenderer {
     private bsp: Bsp;
 
     private mergedMesh: Mesh;

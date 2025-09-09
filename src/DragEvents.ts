@@ -2,7 +2,7 @@ import { WadManager } from "./WadManager";
 
 export class DragEvents {
 
-    constructor(loadMap: (_: ArrayBuffer) => void, wadManager: WadManager) {
+    constructor(loadMap: (name: string, data: ArrayBuffer) => void, wadManager: WadManager) {
         ["dragenter", "dragover", "dragleave", "drop"].forEach(eventName => {
             document.body.addEventListener(eventName, this.preventDefaults, false);
         })
@@ -24,7 +24,8 @@ export class DragEvents {
 
             switch (format) {
                 case "bsp":
-                    loadMap(arrayBuffer);
+                case "map":
+                    loadMap(file.name, arrayBuffer);
                     break;
                 case "wad":
                     wadManager.load(file.name, arrayBuffer);
